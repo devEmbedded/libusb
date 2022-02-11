@@ -1,0 +1,49 @@
+name: windows
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on: [push, pull_request]
+
+# A workflow run is made up of one or more jobs that can run
+# sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    runs-on: windows-2019
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job
+      # can access it
+      - uses: actions/checkout@v2
+
+      - name: Build 64-bit binary
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+          msbuild msvc/libusb_dll.vcxproj /p:Configuration=Release
+
+      - name: Upload 64-bit binary
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            build\*\x64\Release\dll\libusb*.dll
+            build\*\x64\Release\dll\libusb*.lib
+            build\*\x64\Release\dll\libusb*.pdb
+          name: Libusb Windows DLL (64-bit)
+
+      - name: Build 32-bit binary
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars32.bat"
+          msbuild msvc/libusb_dll.vcxproj /p:Configuration=Release
+
+      - name: Upload 32-bit binary
+        uses: actions/upload-artifact@v2
+        with:
+          path: |
+            build\*\Win32\Release\dll\libusb*.dll
+            build\*\Win32\Release\dll\libusb*.dll
+            build\*\Win32\Release\dll\libusb*.dll
+          name: Libusb Windows DLL (32-bit)
+
