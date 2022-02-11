@@ -3086,6 +3086,15 @@ static int winusbx_submit_bulk_transfer(int sub_api, struct usbi_transfer *itran
 	set_transfer_priv_handle(itransfer, handle_priv->interface_handle[current_interface].dev_handle);
 	overlapped = get_transfer_priv_overlapped(itransfer);
 
+	if (sub_api == SUB_API_WINUSB)
+	{
+		// Use RAW_IO when transfer size is divisible by 512 bytes.
+		UCHAR policy = (transfer->length % 512 == 0);
+		if (!WinUSBX[sub_api].SetPipePolicy(winusb_handle, transfer->endpoint, RAW_IO, sizeof(UCHAR), &policy)) {
+				usbi_err(TRANSFER_CTX(transfer), "failed to set RAW_IO for endpoint %02X", transfer->endpoint);
+		}
+	}
+
 	if (IS_XFERIN(transfer)) {
 		usbi_dbg(TRANSFER_CTX(transfer), "reading %d bytes", transfer->length);
 		ret = WinUSBX[sub_api].ReadPipe(winusb_handle, transfer->endpoint, transfer->buffer, transfer->length, NULL, overlapped);
